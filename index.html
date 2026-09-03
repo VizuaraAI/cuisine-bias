@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Much Bias You Find Depends on How You Ask</title>
+<meta name="description" content="We held a meal's ingredients byte for byte identical, changed only how its culture was signalled, and collected 260,000 healthiness ratings from twenty language models. The audit found four times more shared bias when culture arrived inside a dish name, and five times more when the same sentence moved below the ingredient list.">
+<meta property="og:title" content="How Much Bias You Find Depends on How You Ask">
+<meta property="og:description" content="Byte-identical food, twenty models, 260,000 ratings. Naming a culture outright finds almost no shared bias. Letting it ride in with a dish name finds four times more. Moving the sentence finds five times more.">
+<meta property="og:image" content="https://vizuaraai.github.io/cuisine-bias/assets/og.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="180x180" href="assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<style>
+  :root{
+    --paper:#fcfbf7; --panel:#ffffff; --sink:#f6f4ec;
+    --ink:#16130d; --ink2:#3a352b; --muted:#6d665a; --faint:#a49c8c;
+    --line:#e7e2d5; --line2:#d9d3c3;
+    --slate:#155e8c; --shelf:#c0641a; --good:#1c7a55; --hot:#b3006b;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font:400 19px/1.72 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  nav{
+    position:sticky; top:0; z-index:40; background:rgba(252,251,247,.96);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+  }
+  nav .bar{
+    max-width:1080px; margin:0 auto; padding:0 24px; height:58px;
+    display:flex; align-items:center; gap:14px;
+  }
+  nav .mark{display:flex; align-items:center; gap:11px; text-decoration:none; color:var(--ink); min-width:0}
+  nav .mark img{width:26px; height:26px; display:block}
+  nav .mark span{
+    font:600 15px/1.2 var(--sans); letter-spacing:.01em; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis;
+  }
+  nav .mark small{display:block; font:500 11.5px/1.3 var(--sans); color:var(--faint); letter-spacing:.06em; text-transform:uppercase}
+  nav .navlinks{margin-left:auto; display:flex; gap:8px; align-items:center}
+  nav .navlinks a{
+    color:var(--ink2); text-decoration:none; font:600 13.5px/1 var(--sans);
+    padding:8px 13px; border-radius:99px; white-space:nowrap;
+  }
+  nav .navlinks a:hover{background:var(--sink); color:var(--slate)}
+  nav .navlinks a.pill{border:1px solid var(--line2)}
+  nav .navlinks a.pill:hover{border-color:var(--slate)}
+  @media(max-width:620px){ nav .navlinks a.hidesm{display:none} }
+  #progress{position:absolute; left:0; bottom:-1px; height:2px; background:var(--slate); width:0%}
+  .art{max-width:720px; margin:0 auto; padding:0 24px}
+  .wide{max-width:940px; margin-left:auto; margin-right:auto; padding:0 24px}
+  header.hero{padding:72px 0 8px}
+  .kicker{font:600 12.5px/1 var(--sans); letter-spacing:.18em; text-transform:uppercase; color:var(--hot); margin-bottom:22px}
+  h1{font-size:clamp(36px,5.6vw,56px); line-height:1.1; margin:0 0 20px; font-weight:600; letter-spacing:-.012em}
+  .dek{font-size:clamp(20px,2.5vw,24px); line-height:1.5; color:var(--muted); font-style:italic; margin:0 0 30px}
+  .byline{display:flex; align-items:center; gap:13px; font:500 15px/1.4 var(--sans); color:var(--ink2); padding-bottom:8px}
+  .byline img{width:38px; height:38px}
+  .byline .dot{color:var(--faint)}
+  .byline a{color:var(--slate); text-decoration:none}
+  h2{font-size:clamp(25px,3.2vw,31px); line-height:1.25; margin:64px 0 18px; font-weight:600; letter-spacing:-.008em}
+  h3{font-size:21px; margin:40px 0 12px; font-weight:600}
+  p{margin:0 0 22px}
+  a{color:var(--slate)}
+  .pull{
+    border-left:4px solid var(--hot); background:var(--sink);
+    padding:20px 26px; margin:34px 0; font-size:20.5px; line-height:1.55;
+  }
+  .aside{font-size:16px; color:var(--muted); font-style:italic}
+  .toc{background:var(--panel); border:1px solid var(--line); border-radius:6px;
+    padding:24px 28px 18px; margin:40px 0 6px}
+  .toc .toc-title{font:600 12.5px/1 var(--sans); letter-spacing:.18em;
+    text-transform:uppercase; color:var(--muted); margin-bottom:16px}
+  .toc ol{margin:0; padding:0; list-style:none; columns:2; column-gap:40px}
+  .toc li{break-inside:avoid; margin:0 0 10px}
+  .toc a{font:500 15.5px/1.45 var(--sans); color:var(--ink2); text-decoration:none;
+    display:block; padding-left:24px; text-indent:-24px}
+  .toc a:hover{color:var(--slate)}
+  .toc .n{font:600 12px/1 var(--mono); color:var(--faint);
+    display:inline-block; width:24px; text-indent:0}
+  @media(max-width:620px){.toc ol{columns:1}}
+  hr.sep{border:0; border-top:1px solid var(--line); margin:64px auto; max-width:720px}
+  figure.vm{margin:36px 0; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:20px 20px 16px}
+  figure.vm figcaption{font:400 15px/1.55 var(--sans); color:var(--muted); margin-top:12px}
+  figure.vm figcaption b{color:var(--ink2)}
+  .chartbox{position:relative}
+  .chart-scroll{overflow-x:auto}
+  .chart-scroll svg{display:block}
+  .chips{display:flex; flex-wrap:wrap; gap:14px 20px; margin:2px 2px 12px; font:500 13.5px/1 var(--sans); color:var(--ink2)}
+  .chips span{display:inline-flex; align-items:center; gap:7px}
+  .chips i{width:14px; height:4px; border-radius:2px; display:inline-block}
+  .chips i.dotk{width:9px; height:9px; border-radius:50%}
+  .tip{
+    position:absolute; pointer-events:none; z-index:5; display:none;
+    background:var(--ink); color:#fdfcf9; border-radius:6px; padding:8px 11px;
+    font:500 12.5px/1.5 var(--sans); white-space:nowrap; box-shadow:0 4px 14px rgba(20,16,8,.18);
+  }
+  .tip b{font-family:var(--mono); font-weight:600}
+  .replay{
+    position:absolute; right:10px; top:8px; z-index:6;
+    font:600 12px/1 var(--sans); color:var(--muted); background:var(--sink);
+    border:1px solid var(--line2); border-radius:99px; padding:6px 12px; cursor:pointer;
+  }
+  .replay:hover{color:var(--slate); border-color:var(--slate)}
+  svg text{font-family:var(--sans)}
+  svg .num{font-family:var(--mono)}
+  .statline{display:flex; flex-wrap:wrap; gap:14px 40px; margin:26px 0}
+  .statline .v{font:600 34px/1.1 var(--mono); letter-spacing:-.02em}
+  .statline .k{font:400 14px/1.45 var(--sans); color:var(--muted); max-width:220px; margin-top:4px}
+  .two{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin:28px 0}
+  @media(max-width:700px){.two{grid-template-columns:1fr}}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:20px 22px}
+  .card h4{margin:0 0 10px; font:600 16px/1.3 var(--sans)}
+  .card.known{border-top:3px solid var(--faint)}
+  .card.new{border-top:3px solid var(--slate)}
+  .card ul{margin:0; padding-left:19px; font-size:16.5px; line-height:1.6}
+  .card li{margin:7px 0}
+  ul.lims{max-width:none; padding-left:21px}
+  ul.lims li{margin:12px 0}
+  video{width:100%; border:1px solid var(--line); border-radius:6px; background:#000; display:block}
+  pre{background:var(--sink); border:1px solid var(--line); border-radius:6px; padding:16px 18px; overflow-x:auto; font-size:14px; line-height:1.6; font-family:var(--mono)}
+  table{border-collapse:collapse; width:100%; background:var(--panel); font-size:16px}
+  .tablewrap{overflow-x:auto; margin:26px 0; border:1px solid var(--line); border-radius:6px}
+  th,td{padding:11px 14px; text-align:left; border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:0}
+  th{font:600 12.5px/1.3 var(--sans); letter-spacing:.05em; text-transform:uppercase; color:var(--muted); background:var(--sink)}
+  td.num{text-align:right; font-family:var(--mono); font-variant-numeric:tabular-nums}
+  footer{padding:56px 0 80px; color:var(--muted); font:400 15px/1.6 var(--sans)}
+  footer img{width:30px; height:30px; margin-bottom:12px}
+  /* the audit-designer widget */
+  .widget{background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:22px 24px; margin:36px 0}
+  .widget .wrow{display:flex; flex-wrap:wrap; gap:10px 28px; margin-bottom:14px; align-items:center}
+  .widget .wlab{font:600 12.5px/1 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); width:110px}
+  .widget .opts{display:flex; flex-wrap:wrap; gap:8px}
+  .widget button.opt{
+    font:600 13.5px/1 var(--sans); color:var(--ink2); background:var(--sink);
+    border:1px solid var(--line2); border-radius:99px; padding:8px 14px; cursor:pointer;
+  }
+  .widget button.opt[aria-pressed="true"]{background:var(--slate); border-color:var(--slate); color:#fdfcf9}
+  .widget button.opt:disabled{opacity:.38; cursor:not-allowed}
+  .widget .readout{display:flex; align-items:center; gap:26px; margin-top:20px; flex-wrap:wrap}
+  .widget .rho{font:600 52px/1 var(--mono); letter-spacing:-.02em}
+  .widget .verdict{font:400 16px/1.55 var(--sans); color:var(--muted); max-width:430px}
+  .widget .meter{flex:1 1 260px; height:14px; border-radius:7px; background:var(--sink); position:relative; overflow:hidden; min-width:200px}
+  .widget .meter i{position:absolute; left:0; top:0; bottom:0; border-radius:7px; background:var(--slate); transition:width .5s cubic-bezier(.2,.7,.3,1)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="bar">
+    <a class="mark" href="#top">
+      <img src="assets/vizuara-logo.png" alt="Vizuara">
+      <span>Vizuara Research<small>cuisine bias</small></span>
+    </a>
+    <div class="navlinks">
+      <a href="#film" class="hidesm">The film</a>
+      <a href="https://github.com/VizuaraAI/cuisine-bias" class="hidesm">GitHub</a>
+      <a href="assets/paper.pdf" class="pill">Paper&nbsp;PDF</a>
+    </div>
+  </div>
+  <div id="progress"></div>
+</nav>
+
+<header class="hero art" id="top">
+  <div class="kicker">Auditing the auditors</div>
+  <h1>How Much Bias You Find Depends on How You Ask</h1>
+  <p class="dek">We held a meal's ingredients byte for byte identical, changed
+  only how its culture was signalled, and collected roughly 260,000 healthiness
+  ratings from twenty open language models. Telling the models the culture
+  outright found almost no shared bias. Letting the culture ride in with a dish
+  name found four times more. Moving the same sentence below the ingredient
+  list found five times more. The audit was measuring itself.</p>
+  <div class="byline">
+    <img src="assets/vizuara-logo.png" alt="">
+    <div>Vizuara Research <span class="dot">&middot;</span> September 2026
+      <span class="dot">&middot;</span> 12 min read
+      <span class="dot">&middot;</span> <a href="#film">or watch the 3&#8209;minute film</a></div>
+  </div>
+</header>
+
+<div class="art">
+
+  <div class="toc" role="navigation" aria-label="Table of contents">
+    <div class="toc-title">Contents</div>
+    <ol>
+      <li><a href="#question"><span class="n">1</span>A question you can ask 260,000 times</a></li>
+      <li><a href="#choice"><span class="n">2</span>The choice hiding inside every audit</a></li>
+      <li><a href="#meals"><span class="n">3</span>Eighteen meals that never change</a></li>
+      <li><a href="#agreement"><span class="n">4</span>Twenty judges, one honest yardstick</a></li>
+      <li><a href="#split"><span class="n">5</span>Say it outright, and they barely agree</a></li>
+      <li><a href="#names"><span class="n">6</span>Name the dish, and they agree fourfold</a></li>
+      <li><a href="#invented"><span class="n">7</span>Dishes that do not exist</a></li>
+      <li><a href="#position"><span class="n">8</span>Move the sentence, see five times more</a></li>
+      <li><a href="#widget"><span class="n">9</span>Design your own audit</a></li>
+      <li><a href="#artefacts"><span class="n">10</span>Two audits that would have lied</a></li>
+      <li><a href="#scale"><span class="n">11</span>Honest about scale</a></li>
+      <li><a href="#film"><span class="n">12</span>The film</a></li>
+      <li><a href="#prior"><span class="n">13</span>Where this sits in prior work</a></li>
+      <li><a href="#limits"><span class="n">14</span>What this does not show</a></li>
+      <li><a href="#appendix"><span class="n">15</span>Appendix: the statistics from scratch</a></li>
+      <li><a href="#repro"><span class="n">16</span>Reproduce it</a></li>
+    </ol>
+  </div>
+
+  <h2 id="question">A question you can ask a language model 260,000 times</h2>
+
+  <p>Ask a language model to rate how healthy a meal is, on a scale of one to
+  ten, and it answers without complaint. People do this constantly: dietary
+  advice is one of the highest-volume consumer uses of these models. So a
+  natural worry follows. If the model quietly rates food from some cultures as
+  less healthy than identical food from others, that prejudice flows straight
+  into everyday advice, aimed at exactly the populations that nutrition
+  guidance already serves worst.</p>
+
+  <p>The standard way to check is a bias audit, and the recipe sounds airtight.
+  Take a meal. Hold its substance fixed. Change only the cultural marker. If
+  the score moves, you have caught the model discriminating between two things
+  that differ only in culture.</p>
+
+  <p>This study, from Vizuara Research, ran exactly that audit at scale: six
+  cuisines, eighteen ingredient lists, twenty open-weight instruction models
+  from eleven different families, three instruction phrasings, three ingredient
+  orderings, and every combination of the above, roughly 260,000 generations
+  in all. But it was not built to measure which cuisines get marked down. It
+  was built to measure the audit.</p>
+
+  <h2 id="choice">The choice hiding inside every audit</h2>
+
+  <p>Here is the detail that most audits never report. The cultural marker has
+  to be <em>delivered</em>, and ordinary language offers several equally
+  natural deliveries. You can name the people: <em>this is a Japanese
+  recipe</em>. You can name the country: <em>this recipe is from Japan</em>.
+  Or you can say nothing about culture at all and simply name the dish,
+  <em>Miso Shiru</em>, and let the culture ride in quietly with the name.</p>
+
+  <p>These feel interchangeable. They are the same fact, wrapped three ways.
+  Every audit picks one wrapper, usually without comment, and reports its
+  result as the model's bias.</p>
+
+  <div class="pull">Two audits of the same twenty models, both internally
+  consistent, both correct about their own measurements, detected amounts of
+  shared bias that differ by a factor of four, because one said the culture
+  aloud and the other let a dish name imply it.</div>
+
+  <figure class="vm wide" id="anim-channels">
+    <div class="chartbox" id="channels-box"></div>
+    <figcaption><b>One meal, four deliveries.</b> The ingredient list at the
+    center never changes by a single byte. The only thing that changes is the
+    lead sentence: an explicit demonym, an explicit country, a real dish name,
+    or an invented dish name. Each is a different channel through which the
+    same cultural signal reaches the model. Press replay to cycle them.</figcaption>
+  </figure>
+
+  <h2 id="meals">Eighteen meals that never change</h2>
+
+  <p>Everything in the design exists to make one sentence true: whatever moves
+  the rating, it cannot be the food.</p>
+
+  <p>Each of the eighteen items is an ingredient list built on a fixed
+  template: a grain, a protein, a vegetable, a fat, an aromatic, a seasoning.
+  The lists are asserted byte-identical across conditions by the harness
+  itself, not matched by human judgment. Two more rules are enforced
+  programmatically: no ingredient string contains a country word or a demonym,
+  so the list cannot leak culture on its own, and every list is vegetarian and
+  alcohol-free, so religious taboos never collide with a cuisine label. Prior
+  work on food knowledge compared real dishes, which tangles cultural signal
+  with genuine nutritional difference; here the confound is removed by
+  construction rather than by statistics.</p>
+
+  <p>One subtlety matters enough to flag. When the signalled cuisine matches
+  the ingredients' own provenance, the model is judging a plausible pairing,
+  which measures something closer to coherence than culture. Those congruent
+  cells are excluded from the main measurement and analysed separately; the
+  congruence effect turns out not to explain the channel gap, and it nearly
+  vanishes for invented names, which have no canonical dish to clash with.</p>
+
+  <p class="aside">An ethics note the paper states plainly and this article
+  repeats: nutrition is held constant by construction, so nothing here says,
+  or could say, that any real cuisine is healthier than any other. Every
+  number below is a measurement of model behaviour toward identical food. No
+  ranking of cuisines is published, here or in the paper.</p>
+
+  <h2 id="agreement">Twenty judges, and one honest yardstick</h2>
+
+  <p>What should an audit actually report? A single model's gap on a single
+  cuisine is a shaky object: greedy decoding makes each rating deterministic,
+  but change the phrasing or the order of ingredients and the number wobbles.
+  The study measures that wobble directly, by rating every item under nine
+  nuisance variations, and finds a noise floor of half a rating point. Any
+  single-model effect smaller than that is weather, not climate.</p>
+
+  <p>So the estimand is agreement. For each model, compute its cuisine effect:
+  how much the lead sentence for cuisine <em>c</em> shifts its rating of the
+  same item under a neutral lead, averaged over items whose ingredients do not
+  come from <em>c</em>. That gives each model a six-number vector, one per
+  cuisine. Then ask: do the twenty models <em>rank cuisines the same way</em>?
+  The agreement score, written &rho; below, is the average correlation between
+  every pair of model vectors. A bias one model shows and nineteen do not is a
+  quirk of that model. A bias they share is a property of the class, and that
+  is what an audit is trying to detect.</p>
+
+  <figure class="vm wide" id="anim-estimand">
+    <div class="chartbox" id="estimand-box"></div>
+    <figcaption><b>The yardstick, drawn.</b> Each column is one model's
+    cuisine-effect vector on identical food; the cuisines are shown as
+    anonymous colors. Agreement &rho; is the mean correlation over all 190
+    pairs of columns. When the columns rank the colors alike, &rho; rises.
+    Significance comes from shuffling each column independently 5,000 times,
+    which destroys shared order while keeping every model's own numbers.</figcaption>
+  </figure>
+
+  <h2 id="split">Say the culture outright, and the models barely agree</h2>
+
+  <p>Deliver the signal explicitly, <em>this is a Japanese recipe</em>, and the
+  twenty models agree on which cuisines to mark down at &rho; = +0.089. That is
+  not nothing: with twenty models it clears significance at p = 0.017. But it
+  is small enough that an auditor eyeballing the same result at a more typical
+  audit size would call it a null. Name the country instead of the people and
+  agreement drops to +0.050, which does not clear significance at all.</p>
+
+  <p>Hand the models a real dish name instead, and agreement jumps to
+  &rho; = +0.365, four times the demonym figure. Both measurements are
+  pre-registered, both use the same models, the same eighteen ingredient
+  lists, the same rating scale, the same slot in the same prompt. And a
+  difference between a significant and a non-significant result is not itself
+  a significant difference, so the paper tests the contrast directly: the gap
+  is +0.276, with a 95% confidence interval of [+0.03, +0.46] and p = 0.0125.</p>
+
+  <figure class="vm wide" id="fig-agree">
+    <div class="chips" id="agree-chips"></div>
+    <div class="chartbox" id="agree-box"></div>
+    <figcaption><b>The headline split, to scale.</b> Cross-model agreement on
+    the cuisine ordering, by signal channel, over the same 20 models. The two
+    explicit channels sit near the floor; the two dish-name channels sit four
+    times higher, and the invented names match the real ones almost exactly.
+    Hover any bar for its permutation p-value.</figcaption>
+  </figure>
+
+  <h2 id="names">Name the dish, and they agree four times over</h2>
+
+  <p>Why would a name carry more measurable bias than a plain statement of the
+  same fact? One reading is mundane: alignment training teaches models to be
+  careful when a prompt says <em>Japanese</em> or <em>Nigerian</em> out loud,
+  and that care flattens whatever cultural association would otherwise move
+  the score. The signal is not gone; it is suppressed at exactly the moment
+  the audit looks for it. A name slips past that guard, because nothing in
+  <em>Cassoulet</em> announces that culture is being tested.</p>
+
+  <p>But there is an obvious rival explanation, and it is the strongest
+  objection to the whole result. A dish name does not just signal a culture.
+  It names a dish, a real one, with its own typical preparation and its own
+  nutrition profile. If every model happens to know that Miso Shiru is a light
+  soup and Cassoulet is heavy, models would agree with each other about
+  <em>dishes</em>, factually and correctly, and the audit would read that
+  shared knowledge as shared cultural bias. Removing one name at a time
+  cannot settle this, because all five names within a cuisine share the same
+  confound.</p>
+
+  <h2 id="invented">Dishes that do not exist</h2>
+
+  <p>So the study builds thirty dishes that do not exist. Each invented name
+  is assembled from a cuisine's productive naming morphology, the sounds and
+  word-shapes its real dish names use: <em>Ruvellata al Forno</em>,
+  <em>Habuki-jiru</em>, <em>Obe Ajiri</em>, <em>Sopa Zarquena</em>. To a
+  reader they carry an unmistakable cultural accent. But they denote nothing.
+  There is no recipe to remember, no canonical preparation, no nutrition
+  prior to look up.</p>
+
+  <p>A manipulation check confirms the accent transmits: shown only an
+  invented name and asked where the dish is from, models recover the intended
+  cuisine at 75.9% accuracy against a 16.7% chance floor. Real names transmit
+  at 92.7%.</p>
+
+  <p>If shared dish knowledge were driving the agreement, invented names
+  should collapse it. They do not. Agreement under invented names is
+  &rho; = +0.350, statistically indistinguishable from the +0.365 of real
+  names (p = 0.44). Stability checks point the same way: drop any one name
+  and the invented-name ordering barely moves, while real names wobble more,
+  exactly as expected if real names carry dish-specific information that
+  invented ones cannot.</p>
+
+  <figure class="vm wide" id="anim-pseudo">
+    <div class="chartbox" id="pseudo-box"></div>
+    <figcaption><b>The control that kills the objection.</b> A real dish name
+    morphs into an invented one that keeps only the cuisine's naming
+    morphology. The transmission meter shows models still read the intended
+    cuisine at 76% against 17% chance, and the agreement bar barely moves:
+    +0.365 real, +0.350 invented. Whatever the models share, it is attached
+    to the accent of the name, not to knowledge of any actual food.</figcaption>
+  </figure>
+
+  <div class="pull">It is not knowledge about food. A name that denotes
+  nothing, but sounds like a cuisine, carries the full bias signal.</div>
+
+  <h2 id="position">Move the sentence, and the audit sees five times more</h2>
+
+  <p>The second discovery was stranger, and the paper found it while checking
+  something else. Two ablations asked whether the weak explicit result was an
+  artifact of the measurement apparatus. First, the rating scale: maybe one to
+  ten is too coarse to register small explicit effects. Rerunning on a 0 to
+  100 scale reproduces the main result almost exactly, +0.131 explicit versus
+  +0.370 implicit, so coarseness is not the story.</p>
+
+  <p>Then, position. The lead sentence had always come first, before the
+  ingredients. Move the very same sentence to <em>after</em> the ingredient
+  list, and the explicit channel's agreement rises from +0.089 to +0.493,
+  more than fivefold. The implicit channel rises too, from +0.365 to +0.535.
+  And the cuisine ordering under the moved sentence correlates at rank
+  r = +0.87 with the original, so this is not a different bias conjured by a
+  different prompt. It is the same bias, measured far more sensitively.</p>
+
+  <figure class="vm wide" id="fig-position">
+    <div class="chips" id="position-chips"></div>
+    <div class="chartbox" id="position-box"></div>
+    <figcaption><b>Position dominates scale.</b> The same explicit sentence
+    detects +0.089 before the ingredients and +0.493 after them; the real-name
+    channel rises from +0.365 to +0.535. Switching the rating scale from 1&ndash;10
+    to 0&ndash;100 changes almost nothing. Where the signal sits in the prompt
+    matters more than how the answer is quantised.</figcaption>
+  </figure>
+
+  <p>Why would recency matter this much? A plausible mechanism is attention:
+  the last thing before the question sits closest to the generation and is
+  hardest for the model to discount. But the paper is careful not to
+  over-claim a mechanism. What it claims, and demonstrates, is the
+  measurement fact: detectable bias is a property of where the signal sits,
+  as much as of what it says.</p>
+
+  <h2 id="widget">Design your own audit</h2>
+
+  <p>The paper's central argument compresses into one interactive exercise.
+  Below are the design choices an auditor makes, usually without thinking of
+  them as choices. Pick a channel, a position, and a scale, and read off how
+  much shared bias that audit would have reported about these same twenty
+  models eating identical food. Every number is measured in the paper;
+  combinations the paper did not run say so.</p>
+
+  <div class="widget wide" id="audit-widget">
+    <div class="wrow">
+      <div class="wlab">Channel</div>
+      <div class="opts" data-group="channel">
+        <button class="opt" data-v="demonym" aria-pressed="true">explicit demonym</button>
+        <button class="opt" data-v="country" aria-pressed="false">explicit country</button>
+        <button class="opt" data-v="real" aria-pressed="false">real dish name</button>
+        <button class="opt" data-v="pseudo" aria-pressed="false">invented dish name</button>
+      </div>
+    </div>
+    <div class="wrow">
+      <div class="wlab">Position</div>
+      <div class="opts" data-group="position">
+        <button class="opt" data-v="before" aria-pressed="true">before ingredients</button>
+        <button class="opt" data-v="after" aria-pressed="false">after ingredients</button>
+      </div>
+    </div>
+    <div class="wrow">
+      <div class="wlab">Scale</div>
+      <div class="opts" data-group="scale">
+        <button class="opt" data-v="s10" aria-pressed="true">1 to 10</button>
+        <button class="opt" data-v="s100" aria-pressed="false">0 to 100</button>
+      </div>
+    </div>
+    <div class="readout">
+      <div class="rho" id="w-rho">+0.089</div>
+      <div class="meter"><i id="w-meter" style="width:16%"></i></div>
+      <div class="verdict" id="w-verdict"></div>
+    </div>
+  </div>
+
+  <h2 id="artefacts">Two audits that would have lied</h2>
+
+  <p>Two of the study's supporting results deserve their own section, because
+  each one is a complete, self-contained audit failure that produced a
+  beautiful looking number.</p>
+
+  <h3>The flawless, entirely spurious null</h3>
+
+  <p>Forced choice sounds like the sharper instrument: show two meals with
+  identical ingredients, differing only in the cultural label, and make the
+  model pick the healthier one. Run it, and the result looks like a textbook
+  null: win rates of exactly 0.5, cuisine after cuisine. The truth is that 17
+  of the 20 models are position-degenerate. They pick the first option, or
+  the second, almost regardless of content, and because the presentation
+  order is counterbalanced, their win rates are forced to exactly one half
+  <em>by construction</em>. The instrument is not reporting an unbiased
+  model. It is reporting its own symmetry. Only three models survive the
+  degeneracy screen, far too few to conclude anything.</p>
+
+  <h3>The model that said too much</h3>
+
+  <p>An earlier version of the pipeline capped generation at 8 new tokens. One
+  model liked to begin, <em>I&rsquo;d rate this meal as an</em>, and the cap cut it
+  off right there, before the digit. Every one of its ratings failed to
+  parse; the correlation code silently dropped the all-empty column; and the
+  model was still counted in the study's headline total. Raising the cap to
+  24 tokens recovered the same model, finishing its sentence, <em>as an
+  8</em>. The moral is small but sharp: a generation cap is a silent
+  selection criterion on which models your audit contains, and parse rates
+  are a result to report, not plumbing.</p>
+
+  <h2 id="scale">Honest about scale</h2>
+
+  <p>Everything above concerns whether the ordering of cuisine effects is
+  shared across models. None of it says the effects are large, and the paper
+  goes out of its way to keep the two claims separate.</p>
+
+  <p>The magnitudes: spreads between cuisine means run from 0.12 to 0.33
+  rating points, on a one to ten scale, against a measured noise floor of
+  0.50. Only 7 of 120 model-cuisine cells clear the pre-registered smallest
+  effect size of interest. This is a reproducible ordering of small effects,
+  and the paper says so in those words, declining to claim that real-world
+  harm follows at this size.</p>
+
+  <p>And a result about the audit's own power, reported with unusual candor:
+  an earlier version of this study used 13 models. At that size, the
+  name-versus-demonym contrast came out at +0.270 with p = 0.081, an interval
+  spanning zero. Same effect, same design, not enough models: statistical
+  power around 0.53, a coin flip. At 20 models the power reaches 0.76 and
+  the contrast lands. The study that discovered the channel effect could not
+  have detected it one design iteration earlier.</p>
+
+  <figure class="vm wide" id="fig-power">
+    <div class="chips" id="power-chips"></div>
+    <div class="chartbox" id="power-box"></div>
+    <figcaption><b>Left: small effects, honestly placed.</b> Per-channel
+    cuisine spreads in rating points sit below the measured 0.50 noise floor.
+    <b>Right: why 13 models was not enough.</b> Bootstrap power to detect the
+    channel contrast, by number of models: 0.53 at the earlier study's size,
+    0.76 at twenty. Hover the curve for exact values.</figcaption>
+  </figure>
+
+  <div class="pull">A single-channel audit measures a joint property of the
+  model and the channel, and reports it as a property of the model.</div>
+
+  <p>That sentence is the paper's real contribution. The recommendations that
+  fall out of it are concrete: hold content identical rather than matched;
+  report at least one explicit and one implicit channel; vary the signal's
+  position, not only its wording; baseline against a neutral marker rather
+  than an absent one; verify the signal actually transmits; audit parse
+  rates; screen forced-choice designs for position degeneracy; and use enough
+  model families for the contrast you care about to be detectable at all.</p>
+
+  <h2 id="film">The film</h2>
+
+  <p>The three-minute companion film tells the story in miniature: the byte
+  identical meal, the fourfold split, the dishes that do not exist, and the
+  sentence that moved. Every chart in it is drawn from the paper's numbers.</p>
+
+  <div id="filmslot" class="wide" style="padding:0"></div>
+
+  <h2 id="prior">Where this sits in prior work</h2>
+
+  <p>Bias in model-as-judge settings is well documented: judges favor certain
+  positions, longer answers, and their own outputs, and writing style shifts
+  automated grading. Cultural food knowledge specifically has been probed by
+  comparing real dishes across cuisines, which measures knowledge and bias
+  together; this study removes the food by construction. On the measurement
+  side, a growing thread shows that delivery mechanics move results at fixed
+  semantics: serialisation format changes tool-calling accuracy, superficial
+  code style changes code judgment, and offering an abstention option changes
+  behaviour where abstention is unwarranted. Multilingual judging work has
+  reported lower-resourced categories scored more generously, the same
+  direction found here under explicit labels.</p>
+
+  <div class="two">
+    <div class="card known">
+      <h4>What was already known</h4>
+      <ul>
+        <li>LLM judges carry position, verbosity, and self-preference biases</li>
+        <li>Models rate real dishes from different cuisines differently, with food and culture entangled</li>
+        <li>Prompt format can move measured capability at fixed meaning</li>
+        <li>Single-judge findings are fragile; recent work evaluates many judges</li>
+      </ul>
+    </div>
+    <div class="card new">
+      <h4>What this study adds</h4>
+      <ul>
+        <li>Nutrition held identical by construction, so only the cultural signal varies</li>
+        <li>The signalling channel itself changes detected bias fourfold, tested directly</li>
+        <li>Invented-name control separates cultural form from dish knowledge</li>
+        <li>Signal position changes detected bias fivefold while preserving the ordering</li>
+        <li>A 13-model version of the same study could not detect its own effect</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 id="limits">What this does not show</h2>
+
+  <ul class="lims">
+    <li>Six cuisines, eighteen items, thirty real and thirty invented names,
+    one judgment dimension, one prompt family, open-weight models only. The
+    channel effect is demonstrated in this box, not beyond it.</li>
+    <li>The effects are small. Most model-cuisine cells sit under the
+    pre-registered smallest effect of interest, and the paper explicitly does
+    not claim real-world harm at this magnitude.</li>
+    <li>Invented names transmit cuisine less strongly than real ones (75.9%
+    vs 92.7%), which may itself depress the invented-name estimate. The
+    control is conservative with respect to the paper's claim, but not free
+    of that asymmetry.</li>
+    <li>The manipulation check is model-based, not human-normed: it shows the
+    invented names are legible to models, which is the relevant quantity
+    here, but not that they carry the same associations for people.</li>
+    <li>Five of 25 candidate models were excluded for parse rate, and
+    verbose models may differ systematically from concise ones.</li>
+    <li>The healthiness construct is thin. A rating out of ten may track
+    richness, unfamiliarity, or perceived processing; ingredients are fixed,
+    so whatever it tracks is being applied to identical food, but the study
+    cannot say which construct is reported.</li>
+    <li>Nothing here ranks real cuisines by healthiness, and the design makes
+    such a reading impossible: the food never changes.</li>
+  </ul>
+
+  <h2 id="appendix">Appendix: the statistics from scratch</h2>
+
+  <p>Four tools carry the whole paper. None needs more than a paragraph.</p>
+
+  <h3>The agreement score &rho;</h3>
+  <p>Each model gets a vector of six numbers: its average rating shift for
+  each cuisine's signal, on non-congruent items, relative to a neutral lead
+  sentence of the same shape. Take every pair of models, correlate their two
+  vectors, and average the 190 correlations. That average is &rho;. It is
+  deliberately scale-free: a model that reacts strongly and one that reacts
+  faintly can still agree perfectly on the <em>ordering</em>, and ordering is
+  what a class-level bias claim is about. The price of that invariance is
+  that &rho; says nothing about size, which is why the magnitudes get their
+  own section.</p>
+
+  <h3>The permutation test</h3>
+  <p>Is &rho; = +0.365 large? Compared to what? Shuffle each model's six
+  cuisine effects independently, so every model keeps its own numbers but any
+  shared ordering is destroyed, and recompute &rho;. Do this 5,000 times and
+  you have the distribution of agreement that pure coincidence produces. The
+  fraction of shuffles beating the observed value is the p-value. This
+  assumes nothing about which ordering models would agree on, only that
+  under the null there is none.</p>
+
+  <h3>Testing the contrast directly</h3>
+  <p>The study's key claim is not that one channel is significant and another
+  is not; that comparison is a classic fallacy, since significance is a
+  threshold and thresholds create false cliffs. The claim is that the
+  difference between channels is itself significant. For each model, swap its
+  two channel vectors at random and recompute the gap 10,000 times; the
+  observed +0.276 sits outside what swapping produces. A bootstrap over
+  models gives the confidence interval, resampling the unit that
+  generalises: if you care about models as a class, you resample models,
+  not individual ratings, because nine prompts about one dish are not nine
+  independent facts.</p>
+
+  <h3>Reliability, and the attenuation trap</h3>
+  <p>A subtle alternative story: implicit cells average five names while
+  explicit cells have one, so implicit effect vectors are less noisy, and
+  noisier vectors correlate worse. Classical measurement theory has a name
+  and a correction for this, disattenuation by split-half reliability. After
+  correction the implicit advantage survives (+0.416 versus +0.125), and
+  pinning the implicit channel to a single name, matching explicit precision
+  exactly, still leaves it far ahead. The channel gap is not a reliability
+  artifact.</p>
+
+  <h2 id="repro">Reproduce it</h2>
+
+  <p>The audit needs no GPUs beyond what runs the models, and the analysis is
+  a few hundred lines. The paper releases code, prompts, stimuli, the
+  exclusion list, and all raw ratings.</p>
+
+  <pre>stimuli/     18 ingredient lists, byte-identical across conditions
+             30 real dish names, 30 invented names (5 per cuisine each)
+prompts/     4 channel lead sentences + neutral lead, in one shared slot
+             3 instruction paraphrases x 3 ingredient orderings
+run/         20 open-weight instruction models, 11 families
+             greedy decoding, 24-token generation cap (see parse audit)
+analysis/    per-model cuisine-effect vectors on non-congruent items
+             rho = mean pairwise correlation; permutation B = 5000
+             direct channel contrasts: exchange B = 10^4 + model bootstrap
+             reliability, congruence, magnitude, power analyses</pre>
+
+  <p>The headline numbers to check against, all from the paper: channel
+  agreement +0.089 / +0.050 / +0.365 / +0.350; the direct contrast +0.276
+  [+0.03, +0.46], p = 0.0125; the invented-versus-real difference +0.015,
+  p = 0.44; position moves +0.089 to +0.493 and +0.365 to +0.535 with rank
+  r = +0.87; noise floor 0.500; power 0.53 at 13 models and 0.76 at 20.
+  The full details are in the <a href="assets/paper.pdf">paper PDF</a>.</p>
+
+</div>
+
+<footer>
+  <div class="art">
+    <img src="assets/vizuara-logo.png" alt="Vizuara">
+    <div>A Vizuara Research project
+      &middot; <a href="mailto:research@vizuara.com">research@vizuara.com</a></div>
+    <div>Vizuara Research &middot; September 2026 &middot;
+      <a href="assets/paper.pdf">paper</a> &middot;
+      <a href="#film">film</a> &middot;
+      <a href="https://research.vizuara.ai">research.vizuara.ai</a></div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================ shared */
+const C = {slate:'#155e8c', hot:'#b3006b', shelf:'#c0641a', good:'#1c7a55',
+  ink:'#16130d', ink2:'#3a352b', muted:'#6d665a', faint:'#a49c8c',
+  line:'#e7e2d5', line2:'#d9d3c3', paper:'#fcfbf7', panel:'#ffffff', sink:'#f6f4ec'};
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const NS = 'http://www.w3.org/2000/svg';
+
+function el(tag, attrs, parent){
+  const n = document.createElementNS(NS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function txt(parent, x, y, s, attrs){
+  const t = el('text', Object.assign({x, y, fill:C.ink2, 'font-size':14}, attrs||{}), parent);
+  t.textContent = s;
+  return t;
+}
+function svgIn(box, w, h, minW){
+  const scroll = document.createElement('div');
+  scroll.className = 'chart-scroll';
+  box.appendChild(scroll);
+  const s = el('svg', {viewBox:`0 0 ${w} ${h}`, role:'img'}, scroll);
+  s.style.width = '100%';
+  s.style.height = 'auto';
+  s.style.minWidth = (minW||640) + 'px';
+  return s;
+}
+function tween(dur, fn, done){
+  if (REDUCED){ fn(1); if(done) done(); return; }
+  const t0 = performance.now();
+  (function step(now){
+    const p = Math.min(1, (now - t0)/dur);
+    fn(1 - Math.pow(1-p, 3));
+    if (p < 1) requestAnimationFrame(step); else if (done) done();
+  })(t0);
+}
+const replayReg = new Map();
+const onSeen = (node, fn) => {
+  if (!replayReg.has(node)) replayReg.set(node, []);
+  replayReg.get(node).push(fn);
+  if (REDUCED){ fn(); return; }
+  new IntersectionObserver((es, ob) => {
+    es.forEach(e => { if (e.isIntersecting){ ob.disconnect(); fn(); } });
+  }, {threshold:.35}).observe(node);
+};
+function makeReplay(node, fn){
+  if (REDUCED) return;
+  const b = document.createElement('button');
+  b.className = 'replay'; b.textContent = 'replay';
+  b.onclick = fn;
+  node.appendChild(b);
+}
+function legend(id, items){
+  const n = document.getElementById(id);
+  if (!n) return;
+  items.forEach(([name, color, dash]) => {
+    const s = document.createElement('span');
+    const i = document.createElement('i');
+    if (dash === 'dot') i.className = 'dotk';
+    i.style.background = color;
+    if (dash === true) i.style.background =
+      `repeating-linear-gradient(90deg,${color} 0 4px,transparent 4px 7px)`;
+    s.appendChild(i); s.appendChild(document.createTextNode(name));
+    n.appendChild(s);
+  });
+}
+function tipFor(box){
+  const t = document.createElement('div');
+  t.className = 'tip'; box.appendChild(t);
+  return {
+    show(html, x, y){
+      t.innerHTML = html; t.style.display = 'block';
+      const bw = box.clientWidth;
+      t.style.left = Math.min(x + 14, bw - t.offsetWidth - 6) + 'px';
+      t.style.top = Math.max(0, y - t.offsetHeight - 10) + 'px';
+    },
+    hide(){ t.style.display = 'none'; }
+  };
+}
+function barPath(x, y0, y1, w, r){
+  r = Math.min(r, w/2, Math.abs(y0 - y1));
+  if (y1 <= y0)
+    return `M${x},${y0} L${x},${y1+r} Q${x},${y1} ${x+r},${y1} L${x+w-r},${y1} Q${x+w},${y1} ${x+w},${y1+r} L${x+w},${y0} Z`;
+  return `M${x},${y0} L${x},${y1-r} Q${x},${y1} ${x+r},${y1} L${x+w-r},${y1} Q${x+w},${y1} ${x+w},${y1-r} L${x+w},${y0} Z`;
+}
+function drawLine(path, delay){
+  if (REDUCED) return;
+  const L = path.getTotalLength();
+  path.style.transition = 'none';
+  path.style.strokeDasharray = L;
+  path.style.strokeDashoffset = L;
+  path.getBoundingClientRect();
+  path.style.transition = `stroke-dashoffset 1.1s ease ${delay||0}ms`;
+  path.style.strokeDashoffset = 0;
+}
+
+/* ============================================================ data */
+const D = {
+  channels: [
+    {key:'demonym', label:'explicit demonym', rho:0.089, p:'p = 0.017', color:C.shelf},
+    {key:'country', label:'explicit country', rho:0.050, p:'p = 0.080', color:C.shelf},
+    {key:'real',    label:'real dish name',   rho:0.365, p:'p < 0.0001', color:C.slate},
+    {key:'pseudo',  label:'invented name',    rho:0.350, p:'p < 0.0001', color:C.slate},
+  ],
+  position: [
+    {group:'explicit demonym', before:0.089, after:0.493},
+    {group:'real dish name',   before:0.365, after:0.535},
+  ],
+  spreads: [
+    {label:'demonym', v:0.183},
+    {label:'country', v:0.120},
+    {label:'real name', v:0.327},
+    {label:'invented', v:0.178},
+  ],
+  power: [[8,0.35],[12,0.53],[16,0.61],[20,0.76],[24,0.86],[30,0.91]],
+  cuisineTints: ['#155e8c','#1c7a55','#c0641a','#b3006b','#6b4fbb','#0e7490'],
+  leads: [
+    {tag:'explicit demonym', text:'This is a Japanese recipe.', kind:'explicit'},
+    {tag:'explicit country', text:'This recipe is from Japan.', kind:'explicit'},
+    {tag:'real dish name',   text:'Miso Shiru.', kind:'implicit'},
+    {tag:'invented dish name', text:'Habuki-jiru.', kind:'implicit'},
+  ],
+  ingredients: ['grain: white rice, 150 g','protein: firm tofu, 200 g',
+    'vegetable: spinach, 100 g','fat: sesame oil, 1 tbsp',
+    'aromatic: garlic, 2 cloves','seasoning: soy sauce, 1 tbsp'],
+  audit: {
+    'demonym|before|s10':  {v:'+0.089', w:16, note:'The paper’s baseline audit. Significant at 20 models (p = 0.017), but four times weaker than the implicit channels, and invisible at typical audit sizes.'},
+    'demonym|before|s100': {v:'+0.131', w:24, note:'A finer scale changes little. Quantisation was not what hid the explicit signal.'},
+    'demonym|after|s10':   {v:'+0.493', w:90, note:'The same sentence, moved below the ingredients: more than five times the agreement, same cuisine ordering (rank r = +0.87).'},
+    'country|before|s10':  {v:'+0.050', w:9,  note:'The weakest delivery measured: does not clear significance (p = 0.080). An audit built this way reports almost nothing to find.'},
+    'real|before|s10':     {v:'+0.365', w:66, note:'Culture arriving inside a real dish name: four times the demonym agreement, p < 0.0001.'},
+    'real|before|s100':    {v:'+0.370', w:67, note:'Same story on a 0 to 100 scale. The channel gap is not about the answer format.'},
+    'real|after|s10':      {v:'+0.535', w:97, note:'The most sensitive audit measured: an implicit signal, placed after the content.'},
+    'pseudo|before|s10':   {v:'+0.350', w:64, note:'Invented names that denote nothing carry the full signal: indistinguishable from real names (p = 0.44). Not dish knowledge.'},
+  },
+};
+
+/* ============================================================ nav progress */
+addEventListener('scroll', () => {
+  const h = document.documentElement;
+  const p = h.scrollTop / (h.scrollHeight - h.clientHeight);
+  document.getElementById('progress').style.width = (p*100).toFixed(2) + '%';
+}, {passive:true});
+
+/* ============================================================ fig: channels */
+(function(){
+  const box = document.getElementById('channels-box');
+  const W = 880, H = 360;
+  const svg = svgIn(box, W, H, 700);
+
+  const cardX = 300, cardY = 26, cardW = 300, cardH = 308;
+  el('rect', {x:cardX, y:cardY, width:cardW, height:cardH, rx:10,
+    fill:C.panel, stroke:C.line2, 'stroke-width':1.5}, svg);
+  const slot = el('rect', {x:cardX+18, y:cardY+16, width:cardW-36, height:46, rx:8,
+    fill:C.sink, stroke:C.slate, 'stroke-width':1.5, 'stroke-dasharray':'6 5'}, svg);
+  const slotText = txt(svg, cardX+cardW/2, cardY+45, '', {'text-anchor':'middle',
+    'font-size':15.5, fill:C.ink, 'font-style':'italic'});
+  D.ingredients.forEach((s, i) => {
+    txt(svg, cardX+26, cardY+96+i*36, s, {'font-size':13.5, fill:C.muted});
+  });
+  el('line', {x1:cardX+18, y1:cardY+72, x2:cardX+cardW-18, y2:cardY+72,
+    stroke:C.line, 'stroke-width':1}, svg);
+  txt(svg, cardX+cardW/2, cardY+cardH-14, 'byte-identical, always',
+    {'text-anchor':'middle', 'font-size':12, fill:C.faint});
+
+  const tagText = txt(svg, 150, 130, '', {'text-anchor':'middle', 'font-size':14,
+    fill:C.muted, 'font-weight':600});
+  const kindText = txt(svg, 150, 156, '', {'text-anchor':'middle', 'font-size':12.5,
+    fill:C.faint});
+  const arrow = el('path', {d:`M 205 140 H ${cardX-12}`, stroke:C.slate,
+    'stroke-width':2.5, fill:'none', 'marker-end':''}, svg);
+  el('path', {d:`M ${cardX-20} 133 L ${cardX-8} 140 L ${cardX-20} 147 Z`, fill:C.slate}, svg);
+
+  const outX = 690;
+  txt(svg, outX+45, 120, 'healthiness', {'text-anchor':'middle', 'font-size':13, fill:C.muted});
+  const rating = txt(svg, outX+45, 160, '', {'text-anchor':'middle', 'font-size':30,
+    fill:C.ink, 'font-weight':600});
+  rating.classList.add('num');
+  el('path', {d:`M ${cardX+cardW+12} 140 H ${outX-14}`, stroke:C.line2, 'stroke-width':2.5, fill:'none'}, svg);
+  el('path', {d:`M ${outX-22} 133 L ${outX-10} 140 L ${outX-22} 147 Z`, fill:C.line2}, svg);
+
+  let step = 0, timer = null;
+  function show(i){
+    const L = D.leads[i % 4];
+    slotText.textContent = L.text;
+    tagText.textContent = L.tag;
+    kindText.textContent = L.kind === 'explicit' ? 'says the culture aloud' : 'lets the name imply it';
+    slot.setAttribute('stroke', L.kind === 'explicit' ? C.shelf : C.slate);
+    rating.textContent = '?/10';
+  }
+  function play(){
+    clearInterval(timer);
+    step = 0; show(0);
+    if (REDUCED) return;
+    timer = setInterval(() => { step = (step+1) % 4; show(step); }, 2200);
+  }
+  show(0);
+  onSeen(box, play);
+  makeReplay(box, play);
+})();
+
+/* ============================================================ fig: estimand */
+(function(){
+  const box = document.getElementById('estimand-box');
+  const W = 880, H = 330;
+  const svg = svgIn(box, W, H, 700);
+  const nM = 10, x0 = 60, colW = 56, gap = 18, top = 60, rowH = 30;
+
+  txt(svg, x0, 30, 'ten of the twenty models, each ranking six anonymous cuisines',
+    {'font-size':13, fill:C.muted});
+
+  function orderFor(m){
+    const base = [0,1,2,3,4,5];
+    const r = (k) => { const s = Math.sin(m*13.7 + k*7.1)*43758.5; return s - Math.floor(s); };
+    for (let i = 5; i > 0; i--){
+      const j = Math.floor(r(i) * (m < 6 ? 1.8 : (i+1)));
+      const tmp = base[i]; base[i] = base[j]; base[j] = tmp;
+    }
+    return base;
+  }
+  const dots = [];
+  for (let m = 0; m < nM; m++){
+    const cx = x0 + m*(colW+gap) + colW/2;
+    el('rect', {x:x0 + m*(colW+gap), y:top-16, width:colW, height:6*rowH+26, rx:8,
+      fill:C.panel, stroke:C.line, 'stroke-width':1}, svg);
+    txt(svg, cx, top+6*rowH+28, 'm'+(m+1), {'text-anchor':'middle', 'font-size':11.5, fill:C.faint});
+    const ord = orderFor(m);
+    ord.forEach((cIdx, rank) => {
+      const d = el('circle', {cx, cy:top + rank*rowH + 8, r:9,
+        fill:D.cuisineTints[cIdx], opacity:0}, svg);
+      dots.push({d, delay: m*90 + rank*40});
+    });
+  }
+  const rhoLabel = txt(svg, W-118, 168, '', {'font-size':15, fill:C.ink2, 'font-weight':600});
+  rhoLabel.classList.add('num');
+
+  function play(){
+    dots.forEach(({d}) => d.setAttribute('opacity', 0));
+    rhoLabel.textContent = '';
+    dots.forEach(({d, delay}) => {
+      setTimeout(() => tween(360, p => d.setAttribute('opacity', p)), REDUCED ? 0 : delay);
+    });
+    setTimeout(() => {
+      tween(900, p => { rhoLabel.textContent = 'ρ = +' + (0.365*p).toFixed(3); });
+    }, REDUCED ? 0 : 1400);
+  }
+  onSeen(box, play);
+  makeReplay(box, play);
+})();
+
+/* ============================================================ fig: agreement bars */
+(function(){
+  const box = document.getElementById('agree-box');
+  const W = 880, H = 380;
+  const svg = svgIn(box, W, H, 700);
+  const p = {l:74, r:26, t:36, b:66};
+  const y0 = H - p.b, yMax = 0.55;
+  const y = v => y0 - (v/yMax)*(y0 - p.t);
+
+  for (let v = 0; v <= 0.5001; v += 0.1){
+    el('line', {x1:p.l, y1:y(v), x2:W-p.r, y2:y(v), stroke:v===0?C.line2:C.line,
+      'stroke-width':v===0?1.5:1}, svg);
+    txt(svg, p.l-10, y(v)+5, v.toFixed(1), {'text-anchor':'end','font-size':12.5, fill:C.faint}).classList.add('num');
+  }
+  txt(svg, p.l, 22, 'cross-model agreement ρ', {'font-size':13, fill:C.muted});
+
+  const bw = 120, span = (W - p.l - p.r) / 4;
+  const bars = [], tip = tipFor(box);
+  D.channels.forEach((c, i) => {
+    const bx = p.l + span*i + (span-bw)/2;
+    const bar = el('path', {d:barPath(bx, y0, y0, bw, 5), fill:c.color,
+      opacity:i===1?0.55:0.9}, svg);
+    bars.push({bar, bx, c});
+    txt(svg, bx+bw/2, y0+22, c.label, {'text-anchor':'middle', 'font-size':13.5, fill:C.ink2});
+    txt(svg, bx+bw/2, y0+42, c.p, {'text-anchor':'middle', 'font-size':12, fill:C.faint}).classList.add('num');
+    const lab = txt(svg, bx+bw/2, y(c.rho)-10, '+'+c.rho.toFixed(3),
+      {'text-anchor':'middle', 'font-size':15, fill:C.ink, 'font-weight':600, opacity:0});
+    lab.classList.add('num');
+    bars[i].lab = lab;
+    const hit = el('rect', {x:bx-8, y:p.t, width:bw+16, height:y0-p.t, fill:'transparent'}, svg);
+    hit.addEventListener('mousemove', e => {
+      const r = box.getBoundingClientRect();
+      tip.show(`${c.label}: <b>ρ = +${c.rho.toFixed(3)}</b>, ${c.p}`, e.clientX-r.left, e.clientY-r.top);
+    });
+    hit.addEventListener('mouseleave', () => tip.hide());
+  });
+
+  function play(){
+    bars.forEach(({bar, bx, c, lab}, i) => {
+      lab.setAttribute('opacity', 0);
+      setTimeout(() => {
+        tween(950, q => bar.setAttribute('d', barPath(bx, y0, y(c.rho*q), bw, 5)),
+          () => lab.setAttribute('opacity', 1));
+      }, REDUCED ? 0 : i*260);
+    });
+  }
+  onSeen(box, play);
+  makeReplay(box, play);
+  legend('agree-chips', [['explicit channels', C.shelf], ['implicit channels', C.slate]]);
+})();
+
+/* ============================================================ fig: pseudo morph */
+(function(){
+  const box = document.getElementById('pseudo-box');
+  const W = 880, H = 300;
+  const svg = svgIn(box, W, H, 700);
+
+  el('rect', {x:60, y:40, width:330, height:96, rx:10, fill:C.panel, stroke:C.line2, 'stroke-width':1.5}, svg);
+  const nameT = txt(svg, 225, 86, 'Miso Shiru', {'text-anchor':'middle', 'font-size':25, fill:C.ink, 'font-weight':600});
+  const subT = txt(svg, 225, 114, 'a real dish', {'text-anchor':'middle', 'font-size':12.5, fill:C.faint});
+
+  txt(svg, 60, 190, 'cuisine recovered from the name alone', {'font-size':13, fill:C.muted});
+  el('rect', {x:60, y:202, width:330, height:16, rx:8, fill:C.sink}, svg);
+  const meter = el('rect', {x:60, y:202, width:0, height:16, rx:8, fill:C.slate}, svg);
+  el('line', {x1:60+330*0.167, y1:196, x2:60+330*0.167, y2:224, stroke:C.shelf, 'stroke-width':2.5}, svg);
+  txt(svg, 60+330*0.167, 244, 'chance 17%', {'text-anchor':'middle','font-size':12, fill:C.shelf}).classList.add('num');
+  const meterLab = txt(svg, 390, 244, '', {'text-anchor':'end','font-size':13, fill:C.slate, 'font-weight':600});
+  meterLab.classList.add('num');
+
+  const bx = 560, bw = 108, y0 = 250, scale = 420;
+  [['real name', 0.365, 0.5], ['invented', 0.350, 0.95]].forEach(([lab, v, op], i) => {
+    const x = bx + i*170;
+    const bar = el('path', {d:barPath(x, y0, y0, bw, 5), fill:C.slate, opacity:op}, svg);
+    txt(svg, x+bw/2, y0+22, lab, {'text-anchor':'middle','font-size':13.5, fill:C.ink2});
+    const valLab = txt(svg, x+bw/2, y0 - v*scale - 10, '+'+v.toFixed(3),
+      {'text-anchor':'middle','font-size':14.5, fill:C.ink, 'font-weight':600, opacity:0});
+    valLab.classList.add('num');
+    box['bar'+i] = {bar, x, v, valLab};
+  });
+  txt(svg, bx+139, 62, 'no difference, p = 0.44', {'text-anchor':'middle','font-size':13, fill:C.muted}).classList.add('num');
+
+  function play(){
+    nameT.textContent = 'Miso Shiru'; subT.textContent = 'a real dish';
+    meter.setAttribute('width', 0); meterLab.textContent = '';
+    setTimeout(() => {
+      nameT.textContent = 'Habuki-jiru';
+      subT.textContent = 'does not exist';
+    }, REDUCED ? 0 : 1500);
+    setTimeout(() => {
+      tween(900, p => {
+        meter.setAttribute('width', 330*0.759*p);
+        meterLab.textContent = (75.9*p).toFixed(0) + '% recovered';
+      });
+    }, REDUCED ? 0 : 2100);
+    [0,1].forEach(i => {
+      const {bar, x, v, valLab} = box['bar'+i];
+      valLab.setAttribute('opacity', 0);
+      setTimeout(() => {
+        tween(900, q => bar.setAttribute('d', barPath(x, 250, 250 - v*420*q, 108, 5)),
+          () => valLab.setAttribute('opacity', 1));
+      }, REDUCED ? 0 : 2700 + i*260);
+    });
+  }
+  onSeen(box, play);
+  makeReplay(box, play);
+})();
+
+/* ============================================================ fig: position */
+(function(){
+  const box = document.getElementById('position-box');
+  const W = 880, H = 380;
+  const svg = svgIn(box, W, H, 700);
+  const p = {l:74, r:26, t:36, b:66};
+  const y0 = H - p.b, yMax = 0.6;
+  const y = v => y0 - (v/yMax)*(y0 - p.t);
+
+  for (let v = 0; v <= 0.6001; v += 0.1){
+    el('line', {x1:p.l, y1:y(v), x2:W-p.r, y2:y(v), stroke:v===0?C.line2:C.line,
+      'stroke-width':v===0?1.5:1}, svg);
+    txt(svg, p.l-10, y(v)+5, v.toFixed(1), {'text-anchor':'end','font-size':12.5, fill:C.faint}).classList.add('num');
+  }
+  txt(svg, p.l, 22, 'cross-model agreement ρ', {'font-size':13, fill:C.muted});
+
+  const tip = tipFor(box);
+  const groups = [];
+  D.position.forEach((g, gi) => {
+    const gx = p.l + 90 + gi*400;
+    [['before', g.before, C.faint, 0.75], ['after', g.after, C.slate, 0.92]].forEach(([lab, v, col, op], bi) => {
+      const x = gx + bi*140;
+      const bar = el('path', {d:barPath(x, y0, y0, 110, 5), fill:col, opacity:op}, svg);
+      txt(svg, x+55, y0+22, lab, {'text-anchor':'middle','font-size':13.5, fill:C.ink2});
+      const valLab = txt(svg, x+55, y(v)-10, '+'+v.toFixed(3),
+        {'text-anchor':'middle','font-size':15, fill:C.ink, 'font-weight':600, opacity:0});
+      valLab.classList.add('num');
+      groups.push({bar, x, v, valLab, delay: gi*500 + bi*260, lab, g});
+      const hit = el('rect', {x:x-6, y:p.t, width:122, height:y0-p.t, fill:'transparent'}, svg);
+      hit.addEventListener('mousemove', e => {
+        const r = box.getBoundingClientRect();
+        tip.show(`${g.group}, signal ${lab}: <b>ρ = +${v.toFixed(3)}</b>`, e.clientX-r.left, e.clientY-r.top);
+      });
+      hit.addEventListener('mouseleave', () => tip.hide());
+    });
+    txt(svg, gx+145, y0+46, g.group, {'text-anchor':'middle','font-size':14, fill:C.muted});
+  });
+
+  function play(){
+    groups.forEach(({bar, x, v, valLab, delay}) => {
+      valLab.setAttribute('opacity', 0);
+      setTimeout(() => {
+        tween(950, q => bar.setAttribute('d', barPath(x, y0, y(v*q), 110, 5)),
+          () => valLab.setAttribute('opacity', 1));
+      }, REDUCED ? 0 : delay);
+    });
+  }
+  onSeen(box, play);
+  makeReplay(box, play);
+  legend('position-chips', [['signal before ingredients', C.faint], ['signal after ingredients', C.slate]]);
+})();
+
+/* ============================================================ widget */
+(function(){
+  const state = {channel:'demonym', position:'before', scale:'s10'};
+  const wrap = document.getElementById('audit-widget');
+  const rhoEl = document.getElementById('w-rho');
+  const meterEl = document.getElementById('w-meter');
+  const verdictEl = document.getElementById('w-verdict');
+
+  function refresh(){
+    // Only the measured cells exist; grey out impossible options.
+    wrap.querySelectorAll('.opts[data-group="position"] .opt').forEach(b => {
+      b.disabled = (b.dataset.v === 'after' &&
+        !(state.channel === 'demonym' || state.channel === 'real'));
+    });
+    wrap.querySelectorAll('.opts[data-group="scale"] .opt').forEach(b => {
+      b.disabled = (b.dataset.v === 's100' &&
+        !((state.channel === 'demonym' || state.channel === 'real') && state.position === 'before'));
+    });
+    if (wrap.querySelector(`.opts[data-group="position"] .opt[data-v="${state.position}"]`).disabled) state.position = 'before';
+    if (wrap.querySelector(`.opts[data-group="scale"] .opt[data-v="${state.scale}"]`).disabled) state.scale = 's10';
+    wrap.querySelectorAll('.opt').forEach(b => {
+      const g = b.closest('.opts').dataset.group;
+      b.setAttribute('aria-pressed', String(state[g] === b.dataset.v));
+    });
+    const cell = D.audit[`${state.channel}|${state.position}|${state.scale}`];
+    rhoEl.textContent = cell.v;
+    meterEl.style.width = cell.w + '%';
+    verdictEl.textContent = cell.note + ' Same twenty models, identical food.';
+  }
+  wrap.querySelectorAll('.opt').forEach(b => {
+    b.addEventListener('click', () => {
+      if (b.disabled) return;
+      state[b.closest('.opts').dataset.group] = b.dataset.v;
+      refresh();
+    });
+  });
+  refresh();
+})();
+
+/* ============================================================ fig: magnitudes + power */
+(function(){
+  const box = document.getElementById('power-box');
+  const W = 880, H = 360;
+  const svg = svgIn(box, W, H, 700);
+
+  // Left: spreads vs noise floor.
+  const lx = 60, lw = 320, y0 = 300, scale = 420;
+  txt(svg, lx, 30, 'cuisine spread, rating points', {'font-size':13, fill:C.muted});
+  el('line', {x1:lx-8, y1:y0, x2:lx+lw+8, y2:y0, stroke:C.line2, 'stroke-width':1.5}, svg);
+  const floorY = y0 - 0.5*scale;
+  el('line', {x1:lx-8, y1:floorY, x2:lx+lw+8, y2:floorY, stroke:C.shelf,
+    'stroke-width':2, 'stroke-dasharray':'7 6'}, svg);
+  txt(svg, lx+lw+4, floorY-8, 'noise floor 0.50', {'text-anchor':'end','font-size':12, fill:C.shelf}).classList.add('num');
+  const mbars = [];
+  D.spreads.forEach((s, i) => {
+    const x = lx + i*80 + 8;
+    const bar = el('path', {d:barPath(x, y0, y0, 56, 4), fill:C.slate, opacity:0.5}, svg);
+    txt(svg, x+28, y0+20, s.label, {'text-anchor':'middle','font-size':11.8, fill:C.muted});
+    const vl = txt(svg, x+28, y0 - s.v*scale - 8, s.v.toFixed(2),
+      {'text-anchor':'middle','font-size':12.5, fill:C.ink2, opacity:0});
+    vl.classList.add('num');
+    mbars.push({bar, x, v:s.v, vl});
+  });
+
+  // Right: power curve.
+  const px0 = 500, px1 = 830, py0 = 300, py1 = 70;
+  const nx = n => px0 + (n-8)/22*(px1-px0);
+  const ny = v => py0 - v*(py0-py1);
+  txt(svg, px0, 30, 'power to detect the channel gap', {'font-size':13, fill:C.muted});
+  el('line', {x1:px0-8, y1:py0, x2:px1+8, y2:py0, stroke:C.line2, 'stroke-width':1.5}, svg);
+  [[0.5,'0.5'],[1.0,'1.0']].forEach(([v, lab]) => {
+    el('line', {x1:px0-8, y1:ny(v), x2:px1+8, y2:ny(v), stroke:C.line, 'stroke-width':1}, svg);
+    txt(svg, px0-14, ny(v)+4, lab, {'text-anchor':'end','font-size':12, fill:C.faint}).classList.add('num');
+  });
+  D.power.forEach(([n]) => txt(svg, nx(n), py0+20, String(n),
+    {'text-anchor':'middle','font-size':12, fill:C.faint}).classList.add('num'));
+  txt(svg, (px0+px1)/2, py0+42, 'models in the audit', {'text-anchor':'middle','font-size':13, fill:C.muted});
+  const path = el('path', {
+    d: 'M ' + D.power.map(([n,v]) => `${nx(n)},${ny(v)}`).join(' L '),
+    fill:'none', stroke:C.ink2, 'stroke-width':3, 'stroke-linecap':'round'}, svg);
+  const m13 = el('circle', {cx:nx(13), cy:ny(0.53), r:8, fill:C.paper, stroke:C.shelf, 'stroke-width':3.5, opacity:0}, svg);
+  const m20 = el('circle', {cx:nx(20), cy:ny(0.76), r:8, fill:C.slate, opacity:0}, svg);
+  const l13 = txt(svg, nx(13)-12, ny(0.53)+30, '13 models: 0.53', {'font-size':12.5, fill:C.shelf, opacity:0});
+  const l20 = txt(svg, nx(20)-16, ny(0.76)-16, '20 models: 0.76', {'text-anchor':'end','font-size':12.5, fill:C.slate, opacity:0});
+  l13.classList.add('num'); l20.classList.add('num');
+
+  const tip = tipFor(box);
+  D.power.forEach(([n, v]) => {
+    const hit = el('circle', {cx:nx(n), cy:ny(v), r:16, fill:'transparent'}, svg);
+    hit.addEventListener('mousemove', e => {
+      const r = box.getBoundingClientRect();
+      tip.show(`${n} models: power <b>${v.toFixed(2)}</b>`, e.clientX-r.left, e.clientY-r.top);
+    });
+    hit.addEventListener('mouseleave', () => tip.hide());
+  });
+
+  function play(){
+    mbars.forEach(({bar, x, v, vl}, i) => {
+      vl.setAttribute('opacity', 0);
+      setTimeout(() => {
+        tween(800, q => bar.setAttribute('d', barPath(x, y0, y0 - v*scale*q, 56, 4)),
+          () => vl.setAttribute('opacity', 1));
+      }, REDUCED ? 0 : i*160);
+    });
+    [m13, m20, l13, l20].forEach(n => n.setAttribute('opacity', 0));
+    onSeenDraw();
+    setTimeout(() => { [m13, l13].forEach(n => n.setAttribute('opacity', 1)); }, REDUCED ? 0 : 1500);
+    setTimeout(() => { [m20, l20].forEach(n => n.setAttribute('opacity', 1)); }, REDUCED ? 0 : 1900);
+  }
+  function onSeenDraw(){ drawLine(path, 300); }
+  onSeen(box, play);
+  makeReplay(box, play);
+  legend('power-chips', [['cuisine spread per channel', C.slate],
+    ['noise floor', C.shelf, true], ['bootstrap power', C.ink2]]);
+})();
+</script>
+</body>
+</html>
